@@ -69,6 +69,10 @@ pub async fn update(
 
 pub async fn remove(auth:auth::JWT, Path(id): Path<i32>, State(ctx): State<AppContext>) -> Result<()> {
     let current_user = users::Model::find_by_pid(&ctx.db, &auth.claims.pid).await?;
+    delete_post(current_user, id, ctx).await
+}
+
+pub async fn delete_post(current_user: users::Model, id:i32, ctx: AppContext) -> Result<()> {
     let item = load_item(&ctx, id).await?;
     if current_user.id != item.user_id {
         return Err(Error::Unauthorized("You are not the owner of this post".to_string()));
