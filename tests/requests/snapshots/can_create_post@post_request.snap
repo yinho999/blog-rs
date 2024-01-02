@@ -1,0 +1,8 @@
+---
+source: tests/requests/posts.rs
+expression: "(add_post_request.status_code(), add_post_request.text())"
+---
+(
+    200,
+    "{\"created_at\":\"DATE\",\"updated_at\":\"DATE\",\"id\":ID,\"title\":\"loco\",\"description\":\"loco post test description\",\"content\":\"loco post test\",\"user_id\":USER_ID}",
+)
