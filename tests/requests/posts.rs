@@ -51,3 +51,27 @@ async fn can_create_post() {
     })
         .await;
 }
+
+#[tokio::test]
+#[serial]
+async fn cannot_create_post_without_login() {
+    configure_insta!();
+
+    testing::request::<App, _, _>(|request, _ctx| async move {
+        let payload = serde_json::json!({
+            "title": "loco",
+            "description": "loco post test description",
+            "content": "loco post test",
+        });
+
+        let add_post_request = request
+            .post("/api/posts")
+            .json(&payload)
+            .await;
+
+        assert_debug_snapshot!(
+            (add_post_request.status_code(), add_post_request.text())
+        );
+    })
+        .await;
+}
