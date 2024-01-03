@@ -38,6 +38,7 @@ path = "src/bin/main.rs"
 required-features = []
 
 [dev-dependencies]
+fake = { version = "2.9.2", features = ["derive"] }
 serial_test = "2.0.0"
 rstest = "0.18.2"
 loco-rs = { version = "0.1.9", features = ["testing"] }
