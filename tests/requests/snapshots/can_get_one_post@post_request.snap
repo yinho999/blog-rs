@@ -1,8 +1,0 @@
----
-source: tests/requests/posts.rs
-expression: "(post.status_code(), post.text())"
----
-(
-    200,
-    "{\"created_at\":\"DATE\",\"updated_at\":\"DATE\",\"id\":ID,\"title\":\"loco\",\"description\":\"loco post test description\",\"content\":\"loco post test\",\"user_id\":USER_ID}",
-)
