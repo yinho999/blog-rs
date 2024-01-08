@@ -1,0 +1,8 @@
+---
+source: tests/requests/posts.rs
+expression: "(post.status_code(), post.text())"
+---
+(
+    200,
+    "",
+)
