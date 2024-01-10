@@ -2,40 +2,16 @@
 #![allow(clippy::unnecessary_struct_initialization)]
 #![allow(clippy::unused_async)]
 
+use loco_rs::model::ModelError;
 use loco_rs::prelude::*;
-use serde::{Deserialize, Serialize};
-
-use crate::models::_entities::posts::{ActiveModel, Entity, Model};
+use uuid::Uuid;
+use crate::models::_entities::posts::{Entity, Model};
+use crate::models::_entities::prelude::Users;
 use crate::models::_entities::users;
+use crate::models::posts::PostParams;
 use crate::views::post::{ CreatePostResponse, GetPostResponse, UpdatePostResponse};
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Params {
-    pub title: String,
-    pub description: String,
-    pub content: String,
-}
 
-impl Params {
-    fn create(&self, current_user: users::Model) -> ActiveModel {
-        ActiveModel {
-            title: Set(self.title.clone()),
-            description: Set(self.description.clone()),
-            content: Set(self.content.clone()),
-            user_id: Set(current_user.id),
-            ..Default::default()
-        }
-    }
-    fn update(&self, item: &mut ActiveModel, current_user: users::Model) -> Result<()> {
-        if &current_user.id != item.user_id.as_ref() {
-            return Err(Error::Unauthorized("You are not the owner of this post".to_string()));
-        }
-        item.title = Set(self.title.clone());
-        item.description = Set(self.description.clone());
-        item.content = Set(self.content.clone());
-        Ok(())
-    }
-}
 
 async fn load_item(ctx: &AppContext, id: i32) -> Result<Model> {
     let item = Entity::find_by_id(id).one(&ctx.db).await?;
@@ -57,11 +33,12 @@ pub async fn list(State(ctx): State<AppContext>) -> Result<Json<Vec<GetPostRespo
     format::json(posts)
 }
 
-pub async fn add(auth: auth::JWT, State(ctx): State<AppContext>, Json(params): Json<Params>) -> Result<Json<CreatePostResponse>> {
-    let current_user = users::Model::find_by_pid(&ctx.db, &auth.claims.pid).await?;
-    let item = params.create(current_user);
-    let item = item.insert(&ctx.db).await?;
-    let author = users::Entity::find_by_id(item.user_id).one(&ctx.db).await?;
+pub async fn add(auth: auth::JWT, State(ctx): State<AppContext>, Json(params): Json<PostParams>) -> Result<Json<CreatePostResponse>> {
+    tracing::debug!("params {:?}", params);
+    // pid from string to uuid
+    let pid = Uuid::parse_str(&auth.claims.pid).map_err(|_| Error::BadRequest("Invalid JWT".to_string()))?;
+    let item = Model::create(&ctx.db, &params, pid).await?;
+    let author = item.find_related(Users).one(&ctx.db).await?;
     let author = author.ok_or_else(|| Error::NotFound)?;
     let item = CreatePostResponse::from_model(item, author);
     format::json(item)
@@ -71,13 +48,19 @@ pub async fn update(
     auth: auth::JWT,
     Path(id): Path<i32>,
     State(ctx): State<AppContext>,
-    Json(params): Json<Params>,
+    Json(params): Json<PostParams>,
 ) -> Result<Json<UpdatePostResponse>> {
     let current_user = users::Model::find_by_pid(&ctx.db, &auth.claims.pid).await?;
     let item = load_item(&ctx, id).await?;
-    let mut item = item.into_active_model();
-    params.update(&mut item, current_user)?;
-    let item = item.update(&ctx.db).await?;
+    let item = match item.update(&ctx.db, &params, current_user.id).await{
+        Ok(item) => item,
+        Err(err) => {
+            return match err {
+                ModelError::Any(_) => unauthorized("unauthorized!"),
+                _ => Err(Error::BadRequest(err.to_string())),
+            }
+        }
+    };
     let author = users::Entity::find_by_id(item.user_id).one(&ctx.db).await?;
     let author = author.ok_or_else(|| Error::NotFound)?;
     let item = UpdatePostResponse::from_model(item, author);
@@ -92,7 +75,7 @@ pub async fn remove(auth: auth::JWT, Path(id): Path<i32>, State(ctx): State<AppC
 pub async fn delete_post(current_user: users::Model, id: i32, ctx: AppContext) -> Result<()> {
     let item = load_item(&ctx, id).await?;
     if current_user.id != item.user_id {
-        return Err(Error::Unauthorized("You are not the owner of this post".to_string()));
+        return unauthorized("unauthorized!");
     }
     item.delete(&ctx.db).await?;
     format::empty()
