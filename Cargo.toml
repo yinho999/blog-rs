@@ -38,6 +38,7 @@ path = "src/bin/main.rs"
 required-features = []
 
 [dev-dependencies]
+lazy_static = "1.4.0"
 fake = { version = "2.9.2", features = ["derive"] }
 serial_test = "2.0.0"
 rstest = "0.18.2"

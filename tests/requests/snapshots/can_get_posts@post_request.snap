@@ -4,5 +4,5 @@ expression: "(posts.status_code(), posts.text())"
 ---
 (
     200,
-    "[{\"created_at\":\"DATE\",\"updated_at\":\"DATE\",\"id\":ID,\"title\":\"loco\",\"description\":\"loco post test description\",\"content\":\"loco post test\",\"user_id\":USER_ID}]",
+    "[{\"id\":ID,\"title\":\"loco\",\"description\":\"loco post test description\",\"content\":\"loco post test\",\"created_at\":\"DATE\",\"updated_at\":\"DATE\",\"author\":\{\"id\":\"AUTHOR_ID\",\"name\":\"loco\"}}]",
 )
