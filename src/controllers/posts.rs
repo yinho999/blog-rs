@@ -8,7 +8,7 @@ use uuid::Uuid;
 use crate::models::_entities::posts::{Entity, Model};
 use crate::models::_entities::prelude::Users;
 use crate::models::_entities::users;
-use crate::models::posts::PostParams;
+use crate::models::posts::{PostModelError, PostParams};
 use crate::views::post::{ CreatePostResponse, GetPostResponse, UpdatePostResponse};
 
 
@@ -52,15 +52,7 @@ pub async fn update(
 ) -> Result<Json<UpdatePostResponse>> {
     let current_user = users::Model::find_by_pid(&ctx.db, &auth.claims.pid).await?;
     let item = load_item(&ctx, id).await?;
-    let item = match item.update(&ctx.db, &params, current_user.id).await{
-        Ok(item) => item,
-        Err(err) => {
-            return match err {
-                ModelError::Any(_) => unauthorized("unauthorized!"),
-                _ => Err(Error::BadRequest(err.to_string())),
-            }
-        }
-    };
+    let item = item.update(&ctx.db, &params, current_user.id).await?;
     let author = users::Entity::find_by_id(item.user_id).one(&ctx.db).await?;
     let author = author.ok_or_else(|| Error::NotFound)?;
     let item = UpdatePostResponse::from_model(item, author);
