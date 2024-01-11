@@ -1,7 +1,7 @@
 use super::_entities::posts::ActiveModel;
 use crate::models::_entities::users;
 use loco_rs::errors;
-use loco_rs::model::{ModelError, ModelResult};
+use loco_rs::model::ModelError;
 use loco_rs::prelude::*;
 use sea_orm::entity::prelude::*;
 use sea_orm::TransactionTrait;

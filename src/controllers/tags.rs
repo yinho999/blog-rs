@@ -13,6 +13,7 @@ pub struct Params {
 }
 
 impl Params {
+    #[allow(unused)]
     fn create(&mut self) -> ActiveModel {
         ActiveModel {
             name: Set(self.name.clone()),

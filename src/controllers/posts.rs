@@ -5,9 +5,8 @@
 use crate::models::_entities::posts::{Entity, Model};
 use crate::models::_entities::prelude::Users;
 use crate::models::_entities::users;
-use crate::models::posts::{PostModelError, PostParams};
+use crate::models::posts::PostParams;
 use crate::views::post::{CreatePostResponse, GetPostResponse, UpdatePostResponse};
-use loco_rs::model::ModelError;
 use loco_rs::prelude::*;
 use uuid::Uuid;
 

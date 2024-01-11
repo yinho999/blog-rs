@@ -1,7 +1,6 @@
 // auth mailer
 #![allow(non_upper_case_globals)]
 
-use loco_rs::mailer::MailerOpts;
 use loco_rs::prelude::*;
 use serde_json::json;
 

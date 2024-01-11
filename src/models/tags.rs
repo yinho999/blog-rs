@@ -1,6 +1,5 @@
 use super::_entities::tags::ActiveModel;
-use crate::models::_entities::{tags, users};
-use async_trait::async_trait;
+use crate::models::_entities::tags;
 use loco_rs::{validation, validator::Validate};
 use sea_orm::entity::prelude::*;
 use serde::Deserialize;
@@ -55,7 +54,7 @@ impl ActiveModelBehavior for ActiveModel {
         {
             self.validate(db).await?;
             if insert {
-                let mut this = self;
+                let this = self;
                 Ok(this)
             } else {
                 Ok(self)
@@ -64,6 +63,7 @@ impl ActiveModelBehavior for ActiveModel {
     }
 }
 
+#[allow(unused)]
 struct CreateParams {
     name: String,
     description: String,
