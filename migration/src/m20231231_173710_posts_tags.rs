@@ -55,9 +55,7 @@ enum PostsTags {
     Table,
     PostId,
     TagId,
-    
 }
-
 
 #[derive(DeriveIden)]
 enum Posts {

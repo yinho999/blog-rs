@@ -1,6 +1,6 @@
+use crate::models::_entities::{posts, users};
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
-use crate::models::_entities::{posts, users};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct GetPostResponse {
@@ -12,9 +12,9 @@ pub struct GetPostResponse {
     pub updated_at: DateTime,
     pub author: Author,
 }
-impl GetPostResponse{
+impl GetPostResponse {
     #[must_use]
-    pub fn from_model(item: posts::Model, author: users::Model) -> Self{
+    pub fn from_model(item: posts::Model, author: users::Model) -> Self {
         Self {
             id: item.id,
             description: item.description,
@@ -22,7 +22,7 @@ impl GetPostResponse{
             content: item.content,
             created_at: item.created_at,
             updated_at: item.updated_at,
-            author:author.into()
+            author: author.into(),
         }
     }
 }
@@ -31,14 +31,13 @@ pub struct Author {
     pub id: uuid::Uuid,
     pub name: String,
 }
-impl From<users::Model> for Author{
+impl From<users::Model> for Author {
     fn from(item: users::Model) -> Self {
         Self {
             id: item.pid,
             name: item.name,
         }
     }
-
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -54,7 +53,7 @@ pub struct CreatePostResponse {
 
 impl CreatePostResponse {
     #[must_use]
-    pub fn from_model(item: posts::Model, author: users::Model) -> Self{
+    pub fn from_model(item: posts::Model, author: users::Model) -> Self {
         Self {
             id: item.id,
             description: item.description,
@@ -62,7 +61,7 @@ impl CreatePostResponse {
             content: item.content,
             created_at: item.created_at,
             updated_at: item.updated_at,
-            author:author.into()
+            author: author.into(),
         }
     }
 }
@@ -79,7 +78,7 @@ pub struct UpdatePostResponse {
 }
 impl UpdatePostResponse {
     #[must_use]
-    pub fn from_model(item: posts::Model, author: users::Model) -> Self{
+    pub fn from_model(item: posts::Model, author: users::Model) -> Self {
         Self {
             id: item.id,
             description: item.description,
@@ -87,7 +86,7 @@ impl UpdatePostResponse {
             content: item.content,
             created_at: item.created_at,
             updated_at: item.updated_at,
-            author:author.into()
+            author: author.into(),
         }
     }
 }

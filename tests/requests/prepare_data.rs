@@ -1,9 +1,9 @@
-use std::convert::Into;
 use axum::http::{HeaderName, HeaderValue};
-use fake::Fake;
-use fake::faker::internet::en::SafeEmail;
-use loco_rs::{app::AppContext, TestServer};
 use blog::{models::users, views::auth::LoginResponse};
+use fake::faker::internet::en::SafeEmail;
+use fake::Fake;
+use loco_rs::{app::AppContext, TestServer};
+use std::convert::Into;
 const USER_EMAIL: &str = "test@loco.com";
 const USER_PASSWORD: &str = "12341234";
 fn generate_user_email() -> String {
@@ -13,7 +13,6 @@ fn generate_user_email() -> String {
 fn generate_user_password() -> String {
     fake::faker::internet::en::Password(8..16).fake()
 }
-
 
 pub struct LoggedInUser {
     pub user: users::Model,

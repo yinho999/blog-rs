@@ -9,11 +9,11 @@ use crate::models::_entities::tags::{ActiveModel, Entity, Model};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Params {
     pub name: String,
-    pub description:String,
+    pub description: String,
 }
 
 impl Params {
-    fn create(&mut self, ) -> ActiveModel {
+    fn create(&mut self) -> ActiveModel {
         ActiveModel {
             name: Set(self.name.clone()),
             description: Set(self.description.clone()),

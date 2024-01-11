@@ -35,7 +35,4 @@ enum Posts {
     Title,
     Description,
     Content,
-    
 }
-
-

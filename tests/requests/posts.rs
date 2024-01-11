@@ -1,9 +1,9 @@
+use blog::app::App;
+use blog::views::post::CreatePostResponse;
 use insta::{assert_debug_snapshot, with_settings};
 use lazy_static::lazy_static;
-use blog::app::App;
 use loco_rs::testing;
 use serial_test::serial;
-use blog::views::post::CreatePostResponse;
 
 use super::prepare_data;
 
@@ -17,9 +17,10 @@ macro_rules! configure_insta {
 }
 // Lazy-static constants for data cleanup patterns
 lazy_static! {
-    pub static ref CLEANUP_AUTHOR_ID: Vec<(&'static str, &'static str)> = vec![
-        (r#"\\"author\\":\{\\"id\\":\\"([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})"#, r#"\"author\":\{\"id\":\"AUTHOR_ID"#)
-    ];
+    pub static ref CLEANUP_AUTHOR_ID: Vec<(&'static str, &'static str)> = vec![(
+        r#"\\"author\\":\{\\"id\\":\\"([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})"#,
+        r#"\"author\":\{\"id\":\"AUTHOR_ID"#
+    )];
 }
 
 #[tokio::test]
@@ -57,7 +58,7 @@ async fn can_create_post() {
         );
         });
     })
-        .await;
+    .await;
 }
 
 #[tokio::test]
@@ -72,16 +73,11 @@ async fn cannot_create_post_without_login() {
             "content": "loco post test",
         });
 
-        let add_post_request = request
-            .post("/api/posts")
-            .json(&payload)
-            .await;
+        let add_post_request = request.post("/api/posts").json(&payload).await;
 
-        assert_debug_snapshot!(
-            (add_post_request.status_code(), add_post_request.text())
-        );
+        assert_debug_snapshot!((add_post_request.status_code(), add_post_request.text()));
     })
-        .await;
+    .await;
 }
 
 // Get all posts if exist
@@ -123,7 +119,7 @@ async fn can_get_posts() {
         );
         });
     })
-        .await;
+    .await;
 }
 
 // Get no posts if not exist
@@ -135,11 +131,9 @@ async fn can_get_no_posts() {
     testing::request::<App, _, _>(|request, _ctx| async move {
         let posts = request.get("/api/posts").await;
 
-        assert_debug_snapshot!(
-            (posts.status_code(), posts.text())
-        );
+        assert_debug_snapshot!((posts.status_code(), posts.text()));
     })
-        .await;
+    .await;
 }
 
 // Get one post if exist
@@ -183,7 +177,7 @@ async fn can_get_one_post() {
         );
         });
     })
-        .await;
+    .await;
 }
 
 // Get no post if not exist
@@ -195,11 +189,9 @@ async fn can_get_no_post() {
     testing::request::<App, _, _>(|request, _ctx| async move {
         let post = request.get("/api/posts/1").await;
 
-        assert_debug_snapshot!(
-            (post.status_code(), post.text())
-        );
+        assert_debug_snapshot!((post.status_code(), post.text()));
     })
-        .await;
+    .await;
 }
 
 // Update post if exist and log in
@@ -253,7 +245,7 @@ async fn can_update_post() {
         );
         });
     })
-        .await;
+    .await;
 }
 
 // Cannot update post if not login
@@ -293,11 +285,9 @@ async fn cannot_update_post() {
             .json(&payload)
             .await;
 
-        assert_debug_snapshot!(
-            (post.status_code(), post.text())
-        );
+        assert_debug_snapshot!((post.status_code(), post.text()));
     })
-        .await;
+    .await;
 }
 
 // Cannot update post if not exist
@@ -338,11 +328,9 @@ async fn cannot_update_post_if_not_exist() {
             .json(&payload)
             .await;
 
-        assert_debug_snapshot!(
-            (post.status_code(), post.text())
-        );
+        assert_debug_snapshot!((post.status_code(), post.text()));
     })
-        .await;
+    .await;
 }
 
 // Cannot update post if not owner
@@ -360,7 +348,6 @@ async fn cannot_update_post_if_not_owner() {
 
         let (auth_key, auth_value) = prepare_data::auth_header(&user.token);
         let (auth_key2, auth_value2) = prepare_data::auth_header(&user2.token);
-
 
         let payload = serde_json::json!({
             "title": "loco",
@@ -389,11 +376,9 @@ async fn cannot_update_post_if_not_owner() {
             .json(&payload)
             .await;
 
-        assert_debug_snapshot!(
-            (post.status_code(), post.text())
-        );
+        assert_debug_snapshot!((post.status_code(), post.text()));
     })
-        .await;
+    .await;
 }
 
 // Delete post if exist and log in
@@ -428,11 +413,9 @@ async fn can_delete_post() {
             .add_header(auth_key.clone(), auth_value.clone())
             .await;
 
-        assert_debug_snapshot!(
-            (post.status_code(), post.text())
-        );
+        assert_debug_snapshot!((post.status_code(), post.text()));
     })
-        .await;
+    .await;
 }
 
 // Cannot delete post if not login
@@ -466,11 +449,9 @@ async fn cannot_delete_post() {
             .delete(&format!("/api/posts/{}", added_post.id))
             .await;
 
-        assert_debug_snapshot!(
-            (post.status_code(), post.text())
-        );
+        assert_debug_snapshot!((post.status_code(), post.text()));
     })
-        .await;
+    .await;
 }
 
 // Cannot delete post if not exist
@@ -491,11 +472,9 @@ async fn cannot_delete_post_if_not_exist() {
             .add_header(auth_key.clone(), auth_value.clone())
             .await;
 
-        assert_debug_snapshot!(
-            (post.status_code(), post.text())
-        );
+        assert_debug_snapshot!((post.status_code(), post.text()));
     })
-        .await;
+    .await;
 }
 
 // Cannot delete post if not owner
@@ -511,10 +490,8 @@ async fn cannot_delete_post_if_not_owner() {
         let user = prepare_data::init_user_login(&request, &ctx).await;
         let user2 = prepare_data::init_random_user_login(&request, &ctx).await;
 
-
         let (auth_key, auth_value) = prepare_data::auth_header(&user.token);
         let (auth_key2, auth_value2) = prepare_data::auth_header(&user2.token);
-
 
         let payload = serde_json::json!({
             "title": "loco",
@@ -536,9 +513,7 @@ async fn cannot_delete_post_if_not_owner() {
             .add_header(auth_key2.clone(), auth_value2.clone())
             .await;
 
-        assert_debug_snapshot!(
-            (post.status_code(), post.text())
-        );
+        assert_debug_snapshot!((post.status_code(), post.text()));
     })
-        .await;
+    .await;
 }

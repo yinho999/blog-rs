@@ -1,9 +1,9 @@
-use async_trait::async_trait;
-use sea_orm::entity::prelude::*;
-use super::_entities::tags::{ActiveModel};
-use loco_rs::{validation, validator::Validate};
-use serde::Deserialize;
+use super::_entities::tags::ActiveModel;
 use crate::models::_entities::{tags, users};
+use async_trait::async_trait;
+use loco_rs::{validation, validator::Validate};
+use sea_orm::entity::prelude::*;
+use serde::Deserialize;
 
 #[derive(Debug, Validate, Deserialize)]
 struct ModelValidator {
@@ -24,9 +24,14 @@ impl From<&ActiveModel> for ModelValidator {
 }
 
 impl ActiveModel {
-    async fn validate<C>(&self, db: &C) -> Result<(), DbErr> where C: ConnectionTrait, {
+    async fn validate<C>(&self, db: &C) -> Result<(), DbErr>
+    where
+        C: ConnectionTrait,
+    {
         let validator = ModelValidator::from(self);
-        validator.validate().map_err(|e| validation::into_db_error(&e))?;
+        validator
+            .validate()
+            .map_err(|e| validation::into_db_error(&e))?;
         let name = validator.name.clone();
         if tags::Entity::find()
             .filter(tags::Column::Name.eq(name))
@@ -44,8 +49,8 @@ impl ActiveModel {
 impl ActiveModelBehavior for ActiveModel {
     // extend activemodel below (keep comment for generators)
     async fn before_save<C>(self, db: &C, insert: bool) -> Result<Self, DbErr>
-        where
-            C: ConnectionTrait,
+    where
+        C: ConnectionTrait,
     {
         {
             self.validate(db).await?;

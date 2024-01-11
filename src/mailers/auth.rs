@@ -35,7 +35,7 @@ impl AuthMailer {
                 ..Default::default()
             },
         )
-            .await?;
+        .await?;
 
         Ok(())
     }
@@ -59,7 +59,7 @@ impl AuthMailer {
                 ..Default::default()
             },
         )
-            .await?;
+        .await?;
 
         Ok(())
     }

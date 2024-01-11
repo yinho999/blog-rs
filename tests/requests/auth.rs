@@ -1,6 +1,6 @@
+use blog::{app::App, models::users};
 use insta::{assert_debug_snapshot, with_settings};
 use loco_rs::testing;
-use blog::{app::App, models::users};
 use rstest::rstest;
 use serial_test::serial;
 

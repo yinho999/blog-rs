@@ -2,16 +2,14 @@
 #![allow(clippy::unnecessary_struct_initialization)]
 #![allow(clippy::unused_async)]
 
-use loco_rs::model::ModelError;
-use loco_rs::prelude::*;
-use uuid::Uuid;
 use crate::models::_entities::posts::{Entity, Model};
 use crate::models::_entities::prelude::Users;
 use crate::models::_entities::users;
 use crate::models::posts::{PostModelError, PostParams};
-use crate::views::post::{ CreatePostResponse, GetPostResponse, UpdatePostResponse};
-
-
+use crate::views::post::{CreatePostResponse, GetPostResponse, UpdatePostResponse};
+use loco_rs::model::ModelError;
+use loco_rs::prelude::*;
+use uuid::Uuid;
 
 async fn load_item(ctx: &AppContext, id: i32) -> Result<Model> {
     let item = Entity::find_by_id(id).one(&ctx.db).await?;
@@ -33,10 +31,15 @@ pub async fn list(State(ctx): State<AppContext>) -> Result<Json<Vec<GetPostRespo
     format::json(posts)
 }
 
-pub async fn add(auth: auth::JWT, State(ctx): State<AppContext>, Json(params): Json<PostParams>) -> Result<Json<CreatePostResponse>> {
+pub async fn add(
+    auth: auth::JWT,
+    State(ctx): State<AppContext>,
+    Json(params): Json<PostParams>,
+) -> Result<Json<CreatePostResponse>> {
     tracing::debug!("params {:?}", params);
     // pid from string to uuid
-    let pid = Uuid::parse_str(&auth.claims.pid).map_err(|_| Error::BadRequest("Invalid JWT".to_string()))?;
+    let pid = Uuid::parse_str(&auth.claims.pid)
+        .map_err(|_| Error::BadRequest("Invalid JWT".to_string()))?;
     let item = Model::create(&ctx.db, &params, pid).await?;
     let author = item.find_related(Users).one(&ctx.db).await?;
     let author = author.ok_or_else(|| Error::NotFound)?;
@@ -59,7 +62,11 @@ pub async fn update(
     format::json(item)
 }
 
-pub async fn remove(auth: auth::JWT, Path(id): Path<i32>, State(ctx): State<AppContext>) -> Result<()> {
+pub async fn remove(
+    auth: auth::JWT,
+    Path(id): Path<i32>,
+    State(ctx): State<AppContext>,
+) -> Result<()> {
     let current_user = users::Model::find_by_pid(&ctx.db, &auth.claims.pid).await?;
     delete_post(current_user, id, ctx).await
 }
@@ -73,7 +80,10 @@ pub async fn delete_post(current_user: users::Model, id: i32, ctx: AppContext) -
     format::empty()
 }
 
-pub async fn get_one(Path(id): Path<i32>, State(ctx): State<AppContext>) -> Result<Json<GetPostResponse>> {
+pub async fn get_one(
+    Path(id): Path<i32>,
+    State(ctx): State<AppContext>,
+) -> Result<Json<GetPostResponse>> {
     let post = load_item(&ctx, id).await?;
     let author = users::Entity::find_by_id(post.user_id).one(&ctx.db).await?;
     let author = author.ok_or_else(|| Error::NotFound)?;
