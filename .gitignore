@@ -23,4 +23,5 @@ Cargo.lock
 .vscode/
 
 # Configuration
-**/config/*.yaml
+**/config/development.yaml
+**/config/production.yaml
