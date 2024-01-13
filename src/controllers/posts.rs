@@ -52,9 +52,11 @@ pub async fn update(
     State(ctx): State<AppContext>,
     Json(params): Json<PostParams>,
 ) -> Result<Json<UpdatePostResponse>> {
-    let current_user = users::Model::find_by_pid(&ctx.db, &auth.claims.pid).await?;
+    // pid from string to uuid
+    let pid = Uuid::parse_str(&auth.claims.pid)
+        .map_err(|_| Error::BadRequest("Invalid JWT".to_string()))?;
     let item = load_item(&ctx, id).await?;
-    let item = item.update(&ctx.db, &params, current_user.id).await?;
+    let item = item.update(&ctx.db, &params, pid).await?;
     let author = users::Entity::find_by_id(item.user_id).one(&ctx.db).await?;
     let author = author.ok_or_else(|| Error::NotFound)?;
     let item = UpdatePostResponse::from_model(item, author);

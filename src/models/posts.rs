@@ -63,11 +63,19 @@ impl super::_entities::posts::Model {
         &self,
         db: &DatabaseConnection,
         params: &PostParams,
-        user_id: i32,
+        pid: Uuid,
     ) -> result::Result<Self, ModelsError> {
         let txn = db.begin().await?;
+        let user = users::Entity::find()
+            .filter(users::Column::Pid.eq(pid))
+            .one(&txn)
+            .await?;
+        let user = match user {
+            Some(user) => user,
+            None => return Err(ModelError::EntityNotFound.into()),
+        };
         let mut item = self.clone().into_active_model();
-        if item.user_id.as_ref() != &user_id {
+        if item.user_id.as_ref() != &user.id {
             return Err(ModelsError::PermissionDenied(
                 "Permission denied".to_string(),
             ));
