@@ -2,7 +2,7 @@
 #![allow(clippy::unnecessary_struct_initialization)]
 #![allow(clippy::unused_async)]
 
-use crate::models::_entities::posts::{Entity, Model};
+use crate::models::_entities::posts;
 use crate::models::_entities::prelude::Users;
 use crate::models::_entities::users;
 use crate::models::posts::PostParams;
@@ -10,13 +10,13 @@ use crate::views::post::{CreatePostResponse, GetPostResponse, UpdatePostResponse
 use loco_rs::prelude::*;
 use uuid::Uuid;
 
-async fn load_item(ctx: &AppContext, id: i32) -> Result<Model> {
-    let item = Entity::find_by_id(id).one(&ctx.db).await?;
+async fn load_item(ctx: &AppContext, id: i32) -> Result<posts::Model> {
+    let item = posts::Entity::find_by_id(id).one(&ctx.db).await?;
     item.ok_or_else(|| Error::NotFound)
 }
 
 pub async fn list(State(ctx): State<AppContext>) -> Result<Json<Vec<GetPostResponse>>> {
-    let items = Entity::find().all(&ctx.db).await?;
+    let items = posts::Entity::find().all(&ctx.db).await?;
     let mut posts = Vec::new();
     for item in items {
         let author = users::Entity::find_by_id(item.user_id).one(&ctx.db).await?;
@@ -39,7 +39,7 @@ pub async fn add(
     // pid from string to uuid
     let pid = Uuid::parse_str(&auth.claims.pid)
         .map_err(|_| Error::BadRequest("Invalid JWT".to_string()))?;
-    let item = Model::create(&ctx.db, &params, pid).await?;
+    let item = posts::Model::create(&ctx.db, &params, pid).await?;
     let author = item.find_related(Users).one(&ctx.db).await?;
     let author = author.ok_or_else(|| Error::NotFound)?;
     let item = CreatePostResponse::from_model(item, author);

@@ -10,6 +10,9 @@ mod m20231231_172031_alter_tags_description;
 mod m20231231_173417_posts;
 mod m20231231_173710_posts_tags;
 mod m20231231_231132_add_posts_user_reference;
+mod m20240112_065423_series;
+mod m20240112_065849_alter_series_title_description;
+mod m20240112_100002_posts_series;
 pub struct Migrator;
 
 #[async_trait::async_trait]
@@ -23,6 +26,9 @@ impl MigratorTrait for Migrator {
             Box::new(m20231231_173417_posts::Migration),
             Box::new(m20231231_173710_posts_tags::Migration),
             Box::new(m20231231_231132_add_posts_user_reference::Migration),
+            Box::new(m20240112_065423_series::Migration),
+            Box::new(m20240112_065849_alter_series_title_description::Migration),
+            Box::new(m20240112_100002_posts_series::Migration),
         ]
     }
 }

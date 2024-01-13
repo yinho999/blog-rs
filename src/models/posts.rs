@@ -1,35 +1,13 @@
 use super::_entities::posts::ActiveModel;
 use crate::models::_entities::users;
-use loco_rs::errors;
-use loco_rs::model::ModelError;
 use loco_rs::prelude::*;
 use sea_orm::entity::prelude::*;
 use sea_orm::TransactionTrait;
 use serde::{Deserialize, Serialize};
 use std::result;
-#[derive(thiserror::Error, Debug)]
-pub enum PostModelError {
-    #[error(transparent)]
-    FrameworkError(#[from] ModelError),
+use loco_rs::model::ModelError;
+use crate::models::ModelsError;
 
-    #[error("Permission denied: {0}")]
-    PermissionDenied(String),
-}
-
-impl From<DbErr> for PostModelError {
-    fn from(err: DbErr) -> Self {
-        Self::FrameworkError(err.into())
-    }
-}
-
-impl From<PostModelError> for errors::Error {
-    fn from(err: PostModelError) -> Self {
-        match err {
-            PostModelError::FrameworkError(err) => err.into(),
-            PostModelError::PermissionDenied(msg) => Self::Unauthorized(msg),
-        }
-    }
-}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PostParams {
@@ -64,7 +42,7 @@ impl super::_entities::posts::Model {
         db: &DatabaseConnection,
         params: &PostParams,
         pid: Uuid,
-    ) -> result::Result<Self, PostModelError> {
+    ) -> result::Result<Self, ModelsError> {
         let txn = db.begin().await?;
 
         let user = users::Entity::find()
@@ -86,11 +64,11 @@ impl super::_entities::posts::Model {
         db: &DatabaseConnection,
         params: &PostParams,
         user_id: i32,
-    ) -> result::Result<Self, PostModelError> {
+    ) -> result::Result<Self, ModelsError> {
         let txn = db.begin().await?;
         let mut item = self.clone().into_active_model();
         if item.user_id.as_ref() != &user_id {
-            return Err(PostModelError::PermissionDenied(
+            return Err(ModelsError::PermissionDenied(
                 "Permission denied".to_string(),
             ));
         }

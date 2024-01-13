@@ -11,30 +11,30 @@ impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
             .create_table(
-                table_auto(PostsTags::Table)
+                table_auto(PostsSeries::Table)
                     .primary_key(
                         Index::create()
-                            .name("idx-posts_tags-pk")
-                            .table(PostsTags::Table)
-                            .col(PostsTags::PostId)
-                            .col(PostsTags::TagId)
+                            .name("idx-posts_series-pk")
+                            .table(PostsSeries::Table)
+                            .col(PostsSeries::PostId)
+                            .col(PostsSeries::SeriesId)
                             .borrow_mut(),
                     )
-                    .col(integer(PostsTags::PostId).borrow_mut())
-                    .col(integer(PostsTags::TagId).borrow_mut())
+                    .col(integer(PostsSeries::PostId).borrow_mut())
+                    .col(integer(PostsSeries::SeriesId).borrow_mut())
                     .foreign_key(
                         ForeignKey::create()
-                            .name("fk-posts_tags-posts")
-                            .from(PostsTags::Table, PostsTags::PostId)
+                            .name("fk-posts_series-posts")
+                            .from(PostsSeries::Table, PostsSeries::PostId)
                             .to(Posts::Table, Posts::Id)
                             .on_delete(ForeignKeyAction::Cascade)
                             .on_update(ForeignKeyAction::Cascade),
                     )
                     .foreign_key(
                         ForeignKey::create()
-                            .name("fk-posts_tags-tags")
-                            .from(PostsTags::Table, PostsTags::TagId)
-                            .to(Tags::Table, Tags::Id)
+                            .name("fk-posts_series-series")
+                            .from(PostsSeries::Table, PostsSeries::SeriesId)
+                            .to(Series::Table, Series::Id)
                             .on_delete(ForeignKeyAction::Cascade)
                             .on_update(ForeignKeyAction::Cascade),
                     )
@@ -45,17 +45,19 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(PostsTags::Table).to_owned())
+            .drop_table(Table::drop().table(PostsSeries::Table).to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden)]
-enum PostsTags {
+enum PostsSeries {
     Table,
     PostId,
-    TagId,
+    SeriesId,
+    
 }
+
 
 #[derive(DeriveIden)]
 enum Posts {
@@ -63,7 +65,7 @@ enum Posts {
     Id,
 }
 #[derive(DeriveIden)]
-enum Tags {
+enum Series {
     Table,
     Id,
 }

@@ -5,5 +5,6 @@ pub mod prelude;
 pub mod notes;
 pub mod posts;
 pub mod posts_tags;
+pub mod series;
 pub mod tags;
 pub mod users;
