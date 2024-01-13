@@ -1,0 +1,8 @@
+---
+source: tests/requests/posts.rs
+expression: "(posts.status_code(), posts.text())"
+---
+(
+    200,
+    "[{\"id\":ID,\"title\":\"loco3\",\"description\":\"loco post test description3\",\"content\":\"loco post test3\",\"created_at\":\"DATE\",\"updated_at\":\"DATE\"}]",
+)

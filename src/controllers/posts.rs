@@ -6,7 +6,7 @@ use crate::models::_entities::posts;
 use crate::models::_entities::prelude::Users;
 use crate::models::_entities::users;
 use crate::models::posts::PostParams;
-use crate::views::post::{CreatePostResponse, GetPostResponse, UpdatePostResponse};
+use crate::views::post::{CreatePostResponse, GetPostResponse, GetUserPostResponse, UpdatePostResponse};
 use loco_rs::prelude::*;
 use uuid::Uuid;
 
@@ -92,12 +92,28 @@ pub async fn get_one(
     format::json(post)
 }
 
+pub async fn get_user_posts(
+    auth: auth::JWT,
+    State(ctx): State<AppContext>,
+) -> Result<Json<Vec<GetUserPostResponse>>> {
+    let pid = Uuid::parse_str(&auth.claims.pid)
+        .map_err(|_| Error::BadRequest("Invalid JWT".to_string()))?;
+    let posts = posts::Model::get_user_posts(&ctx.db, pid).await?;
+    let mut return_posts = Vec::new();
+    for post in posts {
+        let post = GetUserPostResponse::from_model(post);
+        return_posts.push(post);
+    }
+    format::json(return_posts)
+}
+
 pub fn routes() -> Routes {
     Routes::new()
         .prefix("posts")
         .add("/", get(list))
         .add("/", post(add))
         .add("/:id", get(get_one))
+        .add("/user", get(get_user_posts))
         .add("/:id", delete(remove))
         .add("/:id", put(update))
 }

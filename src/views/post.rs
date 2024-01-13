@@ -39,7 +39,28 @@ impl From<users::Model> for Author {
         }
     }
 }
-
+#[derive(Debug, Deserialize, Serialize)]
+pub struct GetUserPostResponse {
+    pub id: i32,
+    pub title: String,
+    pub description: String,
+    pub content: String,
+    pub created_at: DateTime,
+    pub updated_at: DateTime,
+}
+impl GetUserPostResponse {
+    #[must_use]
+    pub fn from_model(item: posts::Model) -> Self {
+        Self {
+            id: item.id,
+            description: item.description,
+            title: item.title,
+            content: item.content,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+        }
+    }
+}
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CreatePostResponse {
     pub id: i32,

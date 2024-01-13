@@ -1,5 +1,5 @@
 use super::_entities::posts::ActiveModel;
-use crate::models::_entities::users;
+use crate::models::_entities::{posts, users};
 use loco_rs::prelude::*;
 use sea_orm::entity::prelude::*;
 use sea_orm::TransactionTrait;
@@ -44,7 +44,6 @@ impl super::_entities::posts::Model {
         pid: Uuid,
     ) -> result::Result<Self, ModelsError> {
         let txn = db.begin().await?;
-
         let user = users::Entity::find()
             .filter(users::Column::Pid.eq(pid))
             .one(&txn)
@@ -84,5 +83,26 @@ impl super::_entities::posts::Model {
         let item = item.update(&txn).await?;
         txn.commit().await?;
         Ok(item)
+    }
+
+    pub async fn get_user_posts(
+        db: &DatabaseConnection,
+        pid: Uuid,
+    ) -> result::Result<Vec<Self>, ModelsError> {
+        let txn = db.begin().await?;
+        let user = users::Entity::find()
+            .filter(users::Column::Pid.eq(pid))
+            .one(&txn)
+            .await?;
+        let user = match user {
+            Some(user) => user,
+            None => return Err(ModelError::EntityNotFound.into()),
+        };
+        let posts = posts::Entity::find()
+            .filter(posts::Column::UserId.eq(user.id))
+            .all(&txn)
+            .await?;
+        txn.commit().await?;
+        Ok(posts)
     }
 }

@@ -1,0 +1,8 @@
+---
+source: tests/requests/posts.rs
+expression: "(posts.status_code(), posts.text())"
+---
+(
+    401,
+    "{\"error\":\"unauthorized\",\"description\":\"You do not have permission to access this resource\"}",
+)

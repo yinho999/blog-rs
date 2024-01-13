@@ -58,7 +58,7 @@ async fn can_create_post() {
         );
         });
     })
-    .await;
+        .await;
 }
 
 #[tokio::test]
@@ -77,7 +77,7 @@ async fn cannot_create_post_without_login() {
 
         assert_debug_snapshot!((add_post_request.status_code(), add_post_request.text()));
     })
-    .await;
+        .await;
 }
 
 // Get all posts if exist
@@ -119,7 +119,7 @@ async fn can_get_posts() {
         );
         });
     })
-    .await;
+        .await;
 }
 
 // Get no posts if not exist
@@ -133,7 +133,7 @@ async fn can_get_no_posts() {
 
         assert_debug_snapshot!((posts.status_code(), posts.text()));
     })
-    .await;
+        .await;
 }
 
 // Get one post if exist
@@ -177,7 +177,7 @@ async fn can_get_one_post() {
         );
         });
     })
-    .await;
+        .await;
 }
 
 // Get no post if not exist
@@ -191,7 +191,212 @@ async fn can_get_no_post() {
 
         assert_debug_snapshot!((post.status_code(), post.text()));
     })
-    .await;
+        .await;
+}
+
+// Success case: Get one post if exist and log in
+// Get user posts if exist and log in
+#[tokio::test]
+#[serial]
+async fn can_get_user_posts() {
+    configure_insta!();
+
+    testing::request::<App, _, _>(|request, ctx| async move {
+        testing::seed::<App>(&ctx.db).await.unwrap();
+
+        // Login user to create a post
+        let user = prepare_data::init_user_login(&request, &ctx).await;
+
+        let user2 = prepare_data::init_random_user_login(&request, &ctx).await;
+
+        let (auth_key, auth_value) = prepare_data::auth_header(&user.token);
+        let (auth_key2, auth_value2) = prepare_data::auth_header(&user2.token);
+
+        let payload = serde_json::json!({
+            "title": "loco",
+            "description": "loco post test description",
+            "content": "loco post test"
+        });
+
+        let _add_post_request = request
+            .post("/api/posts")
+            .add_header(auth_key.clone(), auth_value.clone())
+            .json(&payload)
+            .await;
+
+        let payload = serde_json::json!({
+            "title": "loco2",
+            "description": "loco post test description2",
+            "content": "loco post test2"
+        });
+
+        let _add_post_request2 = request
+            .post("/api/posts")
+            .add_header(auth_key.clone(), auth_value.clone())
+            .json(&payload)
+            .await;
+
+        let payload = serde_json::json!({
+            "title": "loco3",
+            "description": "loco post test description3",
+            "content": "loco post test3"
+        });
+        let _add_post_request3 = request
+            .post("/api/posts")
+            .add_header(auth_key2.clone(), auth_value2.clone())
+            .json(&payload)
+            .await;
+
+        let posts = request
+            .get("/api/posts/user")
+            .add_header(auth_key.clone(), auth_value.clone())
+            .await;
+
+        with_settings!({
+            filters => {
+                 let mut combined_filters = testing::CLEANUP_DATE.to_vec();
+                    combined_filters.extend(vec![(r#"\"id\\":\d+"#, r#""id\":ID"#)]);
+                    combined_filters
+            }
+        }, {
+            assert_debug_snapshot!(
+            (posts.status_code(), posts.text())
+        );
+        });
+    })
+        .await;
+}
+
+// Cannot get user posts if not login
+#[tokio::test]
+#[serial]
+async fn cannot_get_user_posts_if_not_login() {
+    configure_insta!();
+
+    testing::request::<App, _, _>(|request, ctx| async move {
+        testing::seed::<App>(&ctx.db).await.unwrap();
+
+        // Login user to create a post
+        let user = prepare_data::init_user_login(&request, &ctx).await;
+
+        let user2 = prepare_data::init_random_user_login(&request, &ctx).await;
+
+        let (auth_key, auth_value) = prepare_data::auth_header(&user.token);
+        let (auth_key2, auth_value2) = prepare_data::auth_header(&user2.token);
+
+        let payload = serde_json::json!({
+            "title": "loco",
+            "description": "loco post test description",
+            "content": "loco post test"
+        });
+
+        let _add_post_request = request
+            .post("/api/posts")
+            .add_header(auth_key.clone(), auth_value.clone())
+            .json(&payload)
+            .await;
+
+        let payload = serde_json::json!({
+            "title": "loco2",
+            "description": "loco post test description2",
+            "content": "loco post test2"
+        });
+
+        let _add_post_request2 = request
+            .post("/api/posts")
+            .add_header(auth_key.clone(), auth_value.clone())
+            .json(&payload)
+            .await;
+
+        let payload = serde_json::json!({
+            "title": "loco3",
+            "description": "loco post test description3",
+            "content": "loco post test3"
+        });
+        let _add_post_request3 = request
+            .post("/api/posts")
+            .add_header(auth_key2.clone(), auth_value2.clone())
+            .json(&payload)
+            .await;
+
+        let posts = request
+            .get("/api/posts/user")
+            .await;
+
+        assert_debug_snapshot!(
+            (posts.status_code(), posts.text())
+        );
+    }).await
+}
+
+// Cannot get other user posts if not owner
+#[tokio::test]
+#[serial]
+async fn cannot_get_other_user_posts_if_not_owner() {
+    configure_insta!();
+
+    testing::request::<App, _, _>(|request, ctx| async move {
+        testing::seed::<App>(&ctx.db).await.unwrap();
+
+        // Login user to create a post
+        let user = prepare_data::init_user_login(&request, &ctx).await;
+
+        let user2 = prepare_data::init_random_user_login(&request, &ctx).await;
+
+        let (auth_key, auth_value) = prepare_data::auth_header(&user.token);
+        let (auth_key2, auth_value2) = prepare_data::auth_header(&user2.token);
+
+        let payload = serde_json::json!({
+            "title": "loco",
+            "description": "loco post test description",
+            "content": "loco post test"
+        });
+
+        let _add_post_request = request
+            .post("/api/posts")
+            .add_header(auth_key.clone(), auth_value.clone())
+            .json(&payload)
+            .await;
+
+        let payload = serde_json::json!({
+            "title": "loco2",
+            "description": "loco post test description2",
+            "content": "loco post test2"
+        });
+
+        let _add_post_request2 = request
+            .post("/api/posts")
+            .add_header(auth_key.clone(), auth_value.clone())
+            .json(&payload)
+            .await;
+
+        let payload = serde_json::json!({
+            "title": "loco3",
+            "description": "loco post test description3",
+            "content": "loco post test3"
+        });
+        let _add_post_request3 = request
+            .post("/api/posts")
+            .add_header(auth_key2.clone(), auth_value2.clone())
+            .json(&payload)
+            .await;
+
+        let posts = request
+            .get("/api/posts/user")
+            .add_header(auth_key2.clone(), auth_value2.clone())
+            .await;
+        with_settings!({
+            filters => {
+                 let mut combined_filters = testing::CLEANUP_DATE.to_vec();
+                    combined_filters.extend(vec![(r#"\"id\\":\d+"#, r#""id\":ID"#)]);
+                    combined_filters
+            }
+        }, {
+            assert_debug_snapshot!(
+                (posts.status_code(), posts.text())
+            );
+        });
+    }).await
 }
 
 // Update post if exist and log in
@@ -245,7 +450,7 @@ async fn can_update_post() {
         );
         });
     })
-    .await;
+        .await;
 }
 
 // Cannot update post if not login
@@ -287,7 +492,7 @@ async fn cannot_update_post() {
 
         assert_debug_snapshot!((post.status_code(), post.text()));
     })
-    .await;
+        .await;
 }
 
 // Cannot update post if not exist
@@ -330,7 +535,7 @@ async fn cannot_update_post_if_not_exist() {
 
         assert_debug_snapshot!((post.status_code(), post.text()));
     })
-    .await;
+        .await;
 }
 
 // Cannot update post if not owner
@@ -378,7 +583,7 @@ async fn cannot_update_post_if_not_owner() {
 
         assert_debug_snapshot!((post.status_code(), post.text()));
     })
-    .await;
+        .await;
 }
 
 // Delete post if exist and log in
@@ -415,7 +620,7 @@ async fn can_delete_post() {
 
         assert_debug_snapshot!((post.status_code(), post.text()));
     })
-    .await;
+        .await;
 }
 
 // Cannot delete post if not login
@@ -451,7 +656,7 @@ async fn cannot_delete_post() {
 
         assert_debug_snapshot!((post.status_code(), post.text()));
     })
-    .await;
+        .await;
 }
 
 // Cannot delete post if not exist
@@ -474,7 +679,7 @@ async fn cannot_delete_post_if_not_exist() {
 
         assert_debug_snapshot!((post.status_code(), post.text()));
     })
-    .await;
+        .await;
 }
 
 // Cannot delete post if not owner
@@ -515,5 +720,5 @@ async fn cannot_delete_post_if_not_owner() {
 
         assert_debug_snapshot!((post.status_code(), post.text()));
     })
-    .await;
+        .await;
 }
