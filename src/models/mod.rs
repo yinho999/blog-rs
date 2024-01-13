@@ -8,6 +8,7 @@ pub mod posts_tags;
 pub mod tags;
 pub mod users;
 pub mod series;
+pub mod posts_series;
 
 #[derive(thiserror::Error, Debug)]
 pub enum ModelsError {

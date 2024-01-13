@@ -2,6 +2,7 @@
 
 pub use super::notes::Entity as Notes;
 pub use super::posts::Entity as Posts;
+pub use super::posts_series::Entity as PostsSeries;
 pub use super::posts_tags::Entity as PostsTags;
 pub use super::series::Entity as Series;
 pub use super::tags::Entity as Tags;

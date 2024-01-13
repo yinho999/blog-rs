@@ -17,4 +17,22 @@ pub struct Model {
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}
+pub enum Relation {
+    #[sea_orm(has_many = "super::posts_series::Entity")]
+    PostsSeries,
+}
+
+impl Related<super::posts_series::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::PostsSeries.def()
+    }
+}
+
+impl Related<super::posts::Entity> for Entity {
+    fn to() -> RelationDef {
+        super::posts_series::Relation::Posts.def()
+    }
+    fn via() -> Option<RelationDef> {
+        Some(super::posts_series::Relation::Series.def().rev())
+    }
+}
