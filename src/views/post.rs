@@ -1,6 +1,8 @@
 use crate::models::_entities::{posts, users};
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
+use crate::models::users::Model;
+use crate::views::author::Author;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct GetPostResponse {
@@ -10,35 +12,38 @@ pub struct GetPostResponse {
     pub content: String,
     pub created_at: DateTime,
     pub updated_at: DateTime,
-    pub author: Author,
+    pub author: Option<Author>,
 }
 impl GetPostResponse {
     #[must_use]
-    pub fn from_model(item: posts::Model, author: users::Model) -> Self {
-        Self {
-            id: item.id,
-            description: item.description,
-            title: item.title,
-            content: item.content,
-            created_at: item.created_at,
-            updated_at: item.updated_at,
-            author: author.into(),
+    pub fn from_model(item: posts::Model, author: Option<users::Model>) -> Self {
+        match author{
+            None => {
+                Self {
+                    id: item.id,
+                    description: item.description,
+                    title: item.title,
+                    content: item.content,
+                    created_at: item.created_at,
+                    updated_at: item.updated_at,
+                    author: None,
+                }
+            }
+            Some(author) => {
+                Self {
+                    id: item.id,
+                    description: item.description,
+                    title: item.title,
+                    content: item.content,
+                    created_at: item.created_at,
+                    updated_at: item.updated_at,
+                    author: Some(author.into()),
+                }
+            }
         }
     }
 }
-#[derive(Debug, Deserialize, Serialize)]
-pub struct Author {
-    pub id: uuid::Uuid,
-    pub name: String,
-}
-impl From<users::Model> for Author {
-    fn from(item: users::Model) -> Self {
-        Self {
-            id: item.pid,
-            name: item.name,
-        }
-    }
-}
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct GetUserPostResponse {
     pub id: i32,

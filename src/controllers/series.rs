@@ -3,6 +3,7 @@
 #![allow(clippy::unused_async)]
 
 use loco_rs::prelude::*;
+use uuid::Uuid;
 use crate::models::_entities::series;
 use crate::models::series::SeriesParams;
 
@@ -15,12 +16,16 @@ pub async fn list(State(ctx): State<AppContext>) -> Result<Json<Vec<series::Mode
     format::json(series::Entity::find().all(&ctx.db).await?)
 }
 
+// pub async fn list_user(Path(id): Path<i32>, State(ctx): State<AppContext>) -> Result<Json<Vec<series::Model>>> {
+//     format::json(series::Entity::find_by_user_id(id).all(&ctx.db).await?)
+// }
+
 pub async fn add(auth: auth::JWT, State(ctx): State<AppContext>, Json(params): Json<SeriesParams>) -> Result<Json<series::Model>> {
-    let mut item = series::ActiveModel {
-        ..Default::default()
-    };
-    params.update(&mut item);
-    let item = item.insert(&ctx.db).await?;
+    tracing::debug!("params {:?}", params);
+    // pid from string to uuid
+    let pid = Uuid::parse_str(&auth.claims.pid)
+        .map_err(|_| Error::BadRequest("Invalid JWT".to_string()))?;
+    let item = series::Model::create(&ctx.db, &params, pid).await?;
     format::json(item)
 }
 
