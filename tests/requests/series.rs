@@ -56,7 +56,7 @@ async fn can_create_series() {
         // Create a post 2 for the user
         let add_post_request2 = request
             .post("/api/posts")
-            .add_header(auth_key, auth_value)
+            .add_header(auth_key.clone(), auth_value.clone())
             .json(&payload2)
             .await;
 
@@ -78,6 +78,24 @@ async fn can_create_series() {
             ]
         });
 
+        // Create a series for the user
+        let add_series_request = request
+            .post("/api/series")
+            .add_header(auth_key.clone(), auth_value.clone())
+            .json(&payload)
+            .await;
+
+        with_settings!({
+            filters => {
+                let mut combined_filters = testing::CLEANUP_DATE.to_vec();
+                combined_filters.extend(vec![(r#"\"id\\":\d+"#, r#""id\":ID"#)]);
+                combined_filters.extend(CLEANUP_AUTHOR_ID.iter().copied());
+                combined_filters
+            }
+        },{
+            assert_debug_snapshot!((add_series_request.status_code(), add_series_request.text()));
+
+        });
     })
         .await;
 }

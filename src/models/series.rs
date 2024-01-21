@@ -1,12 +1,13 @@
 use std::result;
 use loco_rs::model::ModelError;
 use sea_orm::entity::prelude::*;
-use sea_orm::{Set, TransactionTrait};
+use sea_orm::{JoinType, QuerySelect, Set, TransactionTrait};
 use serde::{Deserialize, Serialize};
 use crate::models::_entities::{posts, posts_series, series, users};
 use crate::models::ModelsError;
 use super::_entities::series::ActiveModel;
 use futures::future::try_join_all;
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SeriesParams {
     pub title: String,
@@ -15,10 +16,11 @@ pub struct SeriesParams {
 }
 
 impl SeriesParams {
-    pub fn create_series(&self) -> series::ActiveModel {
+    pub fn create_series(&self, user_id: i32) -> series::ActiveModel {
         ActiveModel {
             title: Set(self.title.clone()),
             description: Set(self.description.clone()),
+            user_id: Set(user_id),
             ..Default::default()
         }
     }
@@ -42,6 +44,42 @@ impl ActiveModelBehavior for ActiveModel {
 }
 
 impl super::_entities::series::Model {
+    pub async fn get_related_author(&self, db: &DatabaseConnection) -> result::Result<users::Model, ModelsError> {
+        let txn = db.begin().await?;
+        let author = users::Entity::find_by_id(self.user_id)
+            .one(&txn)
+            .await?;
+        let author = match author {
+            Some(author) => author,
+            None => return Err(ModelError::EntityNotFound.into()),
+        };
+        txn.commit().await?;
+        Ok(author)
+    }
+    pub async fn get_related_posts(&self, db: &DatabaseConnection) -> result::Result<Vec<posts::Model>, ModelsError> {
+        let txn = db.begin().await?;
+        // Perform a single query to join `posts_series` with `posts` and select related posts.
+        let related_posts = posts_series::Entity::find()
+            .filter(posts_series::Column::SeriesId.eq(self.id))
+            .join(
+                JoinType::InnerJoin,
+                posts_series::Relation::Posts.def(),
+            )
+            .select_only()
+            .column_as(posts::Column::Id, "id")
+            .column_as(posts::Column::Title, "title")
+            .column_as(posts::Column::Description, "description")
+            .column_as(posts::Column::Content, "content")
+            .column_as(posts::Column::UserId, "user_id")
+            .column_as(posts::Column::CreatedAt, "created_at")
+            .column_as(posts::Column::UpdatedAt, "updated_at")
+            .into_model::<posts::Model>()
+            .all(&txn)
+            .await?;
+
+        txn.commit().await?;
+        Ok(related_posts)
+    }
     pub async fn create(
         db: &DatabaseConnection,
         params: &SeriesParams,
@@ -69,16 +107,16 @@ impl super::_entities::series::Model {
                 return Err(ModelError::EntityNotFound.into());
             }
         }
-        let series = params.create_series();
+        let series = params.create_series(user.id);
         let series = series.insert(&txn).await.map_err(|err| {
             tracing::error!("Error creating series: {:?}", err);
             err
         })?;
-        // Create posts_series and insert them concurrently
+        // Create posts_series and insert them concurrently into the database
         let posts_series = params.create_posts_series(series.id);
         try_join_all(posts_series.into_iter().map(|post_series| {
             post_series.insert(&txn)
-        })).await.map_err(|err|{
+        })).await.map_err(|err| {
             tracing::error!("Error creating posts_series: {:?}", err);
             err
         })?;

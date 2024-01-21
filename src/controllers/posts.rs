@@ -113,7 +113,7 @@ pub fn routes() -> Routes {
         .add("/", get(list))
         .add("/", post(add))
         .add("/:id", get(get_one))
-        .add("/user", get(get_user_posts))
+        .add("/current", get(get_user_posts))
         .add("/:id", delete(remove))
         .add("/:id", put(update))
 }

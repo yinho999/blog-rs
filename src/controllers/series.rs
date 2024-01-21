@@ -4,8 +4,10 @@
 
 use loco_rs::prelude::*;
 use uuid::Uuid;
-use crate::models::_entities::series;
+use crate::models::_entities::{series, users};
 use crate::models::series::SeriesParams;
+use crate::views::post::GetUserPostResponse;
+use crate::views::series::CreatePostSeriesResponse;
 
 async fn load_item(ctx: &AppContext, id: i32) -> Result<series::Model> {
     let item = series::Entity::find_by_id(id).one(&ctx.db).await?;
@@ -20,13 +22,17 @@ pub async fn list(State(ctx): State<AppContext>) -> Result<Json<Vec<series::Mode
 //     format::json(series::Entity::find_by_user_id(id).all(&ctx.db).await?)
 // }
 
-pub async fn add(auth: auth::JWT, State(ctx): State<AppContext>, Json(params): Json<SeriesParams>) -> Result<Json<series::Model>> {
+pub async fn add(auth: auth::JWT, State(ctx): State<AppContext>, Json(params): Json<SeriesParams>) -> Result<Json<CreatePostSeriesResponse>> {
     tracing::debug!("params {:?}", params);
     // pid from string to uuid
     let pid = Uuid::parse_str(&auth.claims.pid)
         .map_err(|_| Error::BadRequest("Invalid JWT".to_string()))?;
     let item = series::Model::create(&ctx.db, &params, pid).await?;
-    format::json(item)
+    let posts = item.get_related_posts(&ctx.db).await?;
+    let author = item.get_related_author(&ctx.db).await?;
+    let posts = posts.into_iter().map(GetUserPostResponse::from_model).collect();
+    let response = CreatePostSeriesResponse::from_series(item, author, posts);
+    format::json(response)
 }
 
 pub async fn update(
