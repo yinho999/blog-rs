@@ -104,7 +104,7 @@ impl super::_entities::series::Model {
         for post_id in &params.posts {
             if !posts.iter().any(|post| post.id == *post_id) {
                 tracing::error!("Post with id {} not found", post_id);
-                return Err(ModelError::EntityNotFound.into());
+                return Err(ModelsError::PermissionDenied(format!("Post with id {} not found", post_id)));
             }
         }
         let series = params.create_series(user.id);
