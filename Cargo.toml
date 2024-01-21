@@ -32,6 +32,7 @@ include_dir = "0.7"
 uuid = { version = "1.6.0", features = ["v4"] }
 tracing-subscriber = { version = "0.3.17", features = ["env-filter", "json"] }
 thiserror = "1.0.53"
+futures = "0.3.30"
 
 [[bin]]
 name = "blog-cli"

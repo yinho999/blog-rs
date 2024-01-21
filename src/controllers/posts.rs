@@ -21,7 +21,7 @@ pub async fn list(State(ctx): State<AppContext>) -> Result<Json<Vec<GetPostRespo
     for item in items {
         let author = users::Entity::find_by_id(item.user_id).one(&ctx.db).await?;
         if let Some(author) = author {
-            let post = GetPostResponse::from_model(item, author);
+            let post = GetPostResponse::from_model(item, Some(author));
             posts.push(post);
         } else {
             tracing::error!("Author with id {} not found", item.user_id);
@@ -88,7 +88,7 @@ pub async fn get_one(
     let post = load_item(&ctx, id).await?;
     let author = users::Entity::find_by_id(post.user_id).one(&ctx.db).await?;
     let author = author.ok_or_else(|| Error::NotFound)?;
-    let post = GetPostResponse::from_model(post, author);
+    let post = GetPostResponse::from_model(post, Some(author));
     format::json(post)
 }
 

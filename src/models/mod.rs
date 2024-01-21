@@ -27,6 +27,7 @@ impl From<DbErr> for ModelsError {
 
 impl From<ModelsError> for errors::Error {
     fn from(err: ModelsError) -> Self {
+        tracing::error!("ModelsError: {:?}", err);
         match err {
             ModelsError::FrameworkError(err) => err.into(),
             ModelsError::PermissionDenied(msg) => Self::Unauthorized(msg),
