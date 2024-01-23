@@ -182,5 +182,4 @@ async fn cannot_create_series_with_posts_of_other_owner(){
 
     })
         .await;
-
 }

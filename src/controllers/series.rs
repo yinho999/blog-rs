@@ -3,6 +3,7 @@
 #![allow(clippy::unused_async)]
 
 use loco_rs::prelude::*;
+use sea_orm::TransactionTrait;
 use uuid::Uuid;
 use crate::models::_entities::{series, users};
 use crate::models::series::SeriesParams;
@@ -29,11 +30,15 @@ pub async fn add(auth: auth::JWT, State(ctx): State<AppContext>, Json(params): J
     // pid from string to uuid
     let pid = Uuid::parse_str(&auth.claims.pid)
         .map_err(|_| Error::BadRequest("Invalid JWT".to_string()))?;
-    let item = series::Model::create(&ctx.db, &params, pid).await?;
-    let posts = item.get_related_posts(&ctx.db).await?;
-    let author = item.get_related_author(&ctx.db).await?;
+    let txn = ctx.db.begin().await.map_err(|_| Error::InternalServerError)?;
+    let series = series::Model::create(&txn, &params, pid).await?;
+       let (posts, author) = futures::try_join!(
+        series.get_related_posts(&txn),
+        series.get_related_author(&txn)
+    ).map_err(|_| Error::InternalServerError)?;
     let posts = posts.into_iter().map(GetUserPostResponse::from_model).collect();
-    let response = CreatePostSeriesResponse::from_series(item, author, posts);
+    let response = CreatePostSeriesResponse::from_series(series, author, posts);
+    txn.commit().await.map_err(|_| Error::InternalServerError)?;
     format::json(response)
 }
 

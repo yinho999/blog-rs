@@ -25,7 +25,7 @@ impl CreatePostSeriesResponse {
             description: series.description,
             created_at: series.created_at,
             updated_at: series.updated_at,
-            author: author.into(),
+            author: Author::from(author),
             posts,
         }
     }
