@@ -14,6 +14,14 @@ fn generate_user_password() -> String {
     fake::faker::internet::en::Password(8..16).fake()
 }
 
+fn get_user_email() -> String {
+    USER_EMAIL.to_string()
+}
+
+fn get_user_password() -> String {
+    USER_PASSWORD.to_string()
+}
+
 pub struct LoggedInUser {
     pub user: users::Model,
     pub token: String,

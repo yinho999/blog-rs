@@ -38,6 +38,7 @@ impl ActiveModelBehavior for ActiveModel {
 }
 
 impl super::_entities::posts::Model {
+    #[tracing::instrument(name="Create post by user",skip(db))]
     pub async fn create(
         db: &DatabaseConnection,
         params: &PostParams,
@@ -58,6 +59,7 @@ impl super::_entities::posts::Model {
         Ok(item)
     }
 
+    #[tracing::instrument(name="Update post by user",skip(db))]
     pub async fn update(
         &self,
         db: &DatabaseConnection,
@@ -85,7 +87,8 @@ impl super::_entities::posts::Model {
         Ok(item)
     }
 
-    pub async fn get_user_posts(
+    #[tracing::instrument(name="Get user post",skip(db))]
+    pub async fn get_user(
         db: &DatabaseConnection,
         pid: Uuid,
     ) -> result::Result<Vec<Self>, ModelsError> {
@@ -100,6 +103,16 @@ impl super::_entities::posts::Model {
         };
         let posts = posts::Entity::find()
             .filter(posts::Column::UserId.eq(user.id))
+            .all(&txn)
+            .await?;
+        txn.commit().await?;
+        Ok(posts)
+    }
+
+    #[tracing::instrument(name="Get all post",skip(db))]
+    pub async fn get_all(db: &DatabaseConnection,) -> result::Result<Vec<Self>, ModelsError> {
+        let txn = db.begin().await?;
+        let posts = posts::Entity::find()
             .all(&txn)
             .await?;
         txn.commit().await?;

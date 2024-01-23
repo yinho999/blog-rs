@@ -14,6 +14,7 @@ async fn load_item(ctx: &AppContext, id: i32) -> Result<series::Model> {
     item.ok_or_else(|| Error::NotFound)
 }
 
+#[tracing::instrument(name = "List series", skip(ctx))]
 pub async fn list(State(ctx): State<AppContext>) -> Result<Json<Vec<series::Model>>> {
     format::json(series::Entity::find().all(&ctx.db).await?)
 }
@@ -22,6 +23,7 @@ pub async fn list(State(ctx): State<AppContext>) -> Result<Json<Vec<series::Mode
 //     format::json(series::Entity::find_by_user_id(id).all(&ctx.db).await?)
 // }
 
+#[tracing::instrument(name = "Create series by user", skip(ctx,auth))]
 pub async fn add(auth: auth::JWT, State(ctx): State<AppContext>, Json(params): Json<SeriesParams>) -> Result<Json<CreatePostSeriesResponse>> {
     tracing::debug!("params {:?}", params);
     // pid from string to uuid
@@ -35,6 +37,7 @@ pub async fn add(auth: auth::JWT, State(ctx): State<AppContext>, Json(params): J
     format::json(response)
 }
 
+#[tracing::instrument(name = "Update series by user", skip(ctx,auth))]
 pub async fn update(
     auth: auth::JWT, Path(id): Path<i32>,
     State(ctx): State<AppContext>,
@@ -47,11 +50,13 @@ pub async fn update(
     format::json(item)
 }
 
+#[tracing::instrument(name = "Delete series by user", skip(ctx,auth))]
 pub async fn remove(auth: auth::JWT, Path(id): Path<i32>, State(ctx): State<AppContext>) -> Result<()> {
     load_item(&ctx, id).await?.delete(&ctx.db).await?;
     format::empty()
 }
 
+#[tracing::instrument(name = "Get series", skip(ctx))]
 pub async fn get_one(Path(id): Path<i32>, State(ctx): State<AppContext>) -> Result<Json<series::Model>> {
     format::json(load_item(&ctx, id).await?)
 }

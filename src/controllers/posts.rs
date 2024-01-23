@@ -15,8 +15,9 @@ async fn load_item(ctx: &AppContext, id: i32) -> Result<posts::Model> {
     item.ok_or_else(|| Error::NotFound)
 }
 
+#[tracing::instrument(name = "List posts", skip(ctx))]
 pub async fn list(State(ctx): State<AppContext>) -> Result<Json<Vec<GetPostResponse>>> {
-    let items = posts::Entity::find().all(&ctx.db).await?;
+    let items = posts::Model::get_all(&ctx.db).await?;
     let mut posts = Vec::new();
     for item in items {
         let author = users::Entity::find_by_id(item.user_id).one(&ctx.db).await?;
@@ -30,6 +31,7 @@ pub async fn list(State(ctx): State<AppContext>) -> Result<Json<Vec<GetPostRespo
     format::json(posts)
 }
 
+#[tracing::instrument(name = "Create post by user", skip(ctx,auth))]
 pub async fn add(
     auth: auth::JWT,
     State(ctx): State<AppContext>,
@@ -46,6 +48,7 @@ pub async fn add(
     format::json(item)
 }
 
+#[tracing::instrument(name = "Update post by user", skip(ctx,auth))]
 pub async fn update(
     auth: auth::JWT,
     Path(id): Path<i32>,
@@ -63,6 +66,7 @@ pub async fn update(
     format::json(item)
 }
 
+#[tracing::instrument(name = "Delete post by user", skip(ctx,auth))]
 pub async fn remove(
     auth: auth::JWT,
     Path(id): Path<i32>,
@@ -72,6 +76,7 @@ pub async fn remove(
     delete_post(current_user, id, ctx).await
 }
 
+#[tracing::instrument(name = "Check if user are the same", skip(ctx))]
 pub async fn delete_post(current_user: users::Model, id: i32, ctx: AppContext) -> Result<()> {
     let item = load_item(&ctx, id).await?;
     if current_user.id != item.user_id {
@@ -81,6 +86,7 @@ pub async fn delete_post(current_user: users::Model, id: i32, ctx: AppContext) -
     format::empty()
 }
 
+#[tracing::instrument(name = "Get post by id", skip(ctx))]
 pub async fn get_one(
     Path(id): Path<i32>,
     State(ctx): State<AppContext>,
@@ -92,13 +98,14 @@ pub async fn get_one(
     format::json(post)
 }
 
+#[tracing::instrument(name = "Get user owned posts", skip(ctx,auth))]
 pub async fn get_user_posts(
     auth: auth::JWT,
     State(ctx): State<AppContext>,
 ) -> Result<Json<Vec<GetUserPostResponse>>> {
     let pid = Uuid::parse_str(&auth.claims.pid)
         .map_err(|_| Error::BadRequest("Invalid JWT".to_string()))?;
-    let posts = posts::Model::get_user_posts(&ctx.db, pid).await?;
+    let posts = posts::Model::get_user(&ctx.db, pid).await?;
     let mut return_posts = Vec::new();
     for post in posts {
         let post = GetUserPostResponse::from_model(post);
