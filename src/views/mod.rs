@@ -1,5 +1,5 @@
 pub mod auth;
 pub mod post;
 pub mod user;
-mod series;
+pub mod series;
 mod author;

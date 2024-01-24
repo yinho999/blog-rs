@@ -1,7 +1,6 @@
 use crate::models::_entities::{posts, users};
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
-use crate::models::users::Model;
 use crate::views::author::Author;
 
 #[derive(Debug, Deserialize, Serialize)]

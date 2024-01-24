@@ -1,0 +1,8 @@
+---
+source: tests/requests/series.rs
+expression: "(add_series_request.status_code(), add_series_request.text())"
+---
+(
+    401,
+    "{\"error\":\"unauthorized\",\"description\":\"You do not have permission to access this resource\"}",
+)

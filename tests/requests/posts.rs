@@ -248,7 +248,7 @@ async fn can_get_user_posts() {
             .await;
 
         let posts = request
-            .get("/api/posts/user")
+            .get("/api/posts/current")
             .add_header(auth_key.clone(), auth_value.clone())
             .await;
 
@@ -320,7 +320,7 @@ async fn cannot_get_user_posts_if_not_login() {
             .await;
 
         let posts = request
-            .get("/api/posts/user")
+            .get("/api/posts/current")
             .await;
 
         assert_debug_snapshot!(
@@ -382,7 +382,7 @@ async fn cannot_get_other_user_posts_if_not_owner() {
             .await;
 
         let posts = request
-            .get("/api/posts/user")
+            .get("/api/posts/current")
             .add_header(auth_key2.clone(), auth_value2.clone())
             .await;
         with_settings!({

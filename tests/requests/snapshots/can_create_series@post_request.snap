@@ -1,0 +1,8 @@
+---
+source: tests/requests/series.rs
+expression: "(add_series_request.status_code(), add_series_request.text())"
+---
+(
+    200,
+    "{\"id\":ID,\"title\":\"loco series\",\"description\":\"loco series test description\",\"created_at\":\"DATE\",\"updated_at\":\"DATE\",\"author\":\{\"id\":\"AUTHOR_ID\",\"name\":\"loco\"},\"posts\":[{\"id\":ID,\"title\":\"loco 1\",\"description\":\"loco post test description 1\",\"content\":\"loco post test 1\",\"created_at\":\"DATE\",\"updated_at\":\"DATE\"},{\"id\":ID,\"title\":\"loco 2\",\"description\":\"loco post test description 2\",\"content\":\"loco post test 2\",\"created_at\":\"DATE\",\"updated_at\":\"DATE\"}]}",
+)

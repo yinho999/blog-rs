@@ -3,15 +3,19 @@
 #![allow(clippy::unused_async)]
 
 use loco_rs::prelude::*;
+use sea_orm::TransactionTrait;
 use uuid::Uuid;
-use crate::models::_entities::series;
+use crate::models::_entities::{series, users};
 use crate::models::series::SeriesParams;
+use crate::views::post::GetUserPostResponse;
+use crate::views::series::CreatePostSeriesResponse;
 
 async fn load_item(ctx: &AppContext, id: i32) -> Result<series::Model> {
     let item = series::Entity::find_by_id(id).one(&ctx.db).await?;
     item.ok_or_else(|| Error::NotFound)
 }
 
+#[tracing::instrument(name = "List series", skip(ctx))]
 pub async fn list(State(ctx): State<AppContext>) -> Result<Json<Vec<series::Model>>> {
     format::json(series::Entity::find().all(&ctx.db).await?)
 }
@@ -20,15 +24,25 @@ pub async fn list(State(ctx): State<AppContext>) -> Result<Json<Vec<series::Mode
 //     format::json(series::Entity::find_by_user_id(id).all(&ctx.db).await?)
 // }
 
-pub async fn add(auth: auth::JWT, State(ctx): State<AppContext>, Json(params): Json<SeriesParams>) -> Result<Json<series::Model>> {
+#[tracing::instrument(name = "Create series by user", skip(ctx,auth))]
+pub async fn add(auth: auth::JWT, State(ctx): State<AppContext>, Json(params): Json<SeriesParams>) -> Result<Json<CreatePostSeriesResponse>> {
     tracing::debug!("params {:?}", params);
     // pid from string to uuid
     let pid = Uuid::parse_str(&auth.claims.pid)
         .map_err(|_| Error::BadRequest("Invalid JWT".to_string()))?;
-    let item = series::Model::create(&ctx.db, &params, pid).await?;
-    format::json(item)
+    let txn = ctx.db.begin().await.map_err(|_| Error::InternalServerError)?;
+    let series = series::Model::create(&txn, &params, pid).await?;
+       let (posts, author) = futures::try_join!(
+        series.get_related_posts(&txn),
+        series.get_related_author(&txn)
+    ).map_err(|_| Error::InternalServerError)?;
+    let posts = posts.into_iter().map(GetUserPostResponse::from_model).collect();
+    let response = CreatePostSeriesResponse::from_series(series, author, posts);
+    txn.commit().await.map_err(|_| Error::InternalServerError)?;
+    format::json(response)
 }
 
+#[tracing::instrument(name = "Update series by user", skip(ctx,auth))]
 pub async fn update(
     auth: auth::JWT, Path(id): Path<i32>,
     State(ctx): State<AppContext>,
@@ -41,11 +55,13 @@ pub async fn update(
     format::json(item)
 }
 
+#[tracing::instrument(name = "Delete series by user", skip(ctx,auth))]
 pub async fn remove(auth: auth::JWT, Path(id): Path<i32>, State(ctx): State<AppContext>) -> Result<()> {
     load_item(&ctx, id).await?.delete(&ctx.db).await?;
     format::empty()
 }
 
+#[tracing::instrument(name = "Get series", skip(ctx))]
 pub async fn get_one(Path(id): Path<i32>, State(ctx): State<AppContext>) -> Result<Json<series::Model>> {
     format::json(load_item(&ctx, id).await?)
 }

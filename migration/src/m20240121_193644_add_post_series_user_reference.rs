@@ -1,3 +1,6 @@
+use std::borrow::BorrowMut;
+
+use loco_rs::schema::*;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
@@ -10,7 +13,7 @@ enum Users {
 }
 
 #[derive(DeriveIden)]
-enum Posts {
+enum Series {
     Table,
     UserId,
 }
@@ -21,17 +24,16 @@ impl MigrationTrait for Migration {
         manager
             .alter_table(
                 Table::alter()
-                    .table(Posts::Table)
-                    .add_column(ColumnDef::new(Posts::UserId).integer().not_null())
+                    .table(Series::Table)
+                    .add_column(ColumnDef::new(Series::UserId).integer().not_null())
                     .to_owned(),
             )
             .await?;
-
         manager
             .create_foreign_key(
                 ForeignKey::create()
-                    .name("fk_posts_user_id")
-                    .from(Posts::Table, Posts::UserId)
+                    .name("fk_series_user_id")
+                    .from(Series::Table, Series::UserId)
                     .to(Users::Table, Users::Id)
                     .on_update(ForeignKeyAction::Cascade)
                     .on_delete(ForeignKeyAction::Cascade)
@@ -45,12 +47,12 @@ impl MigrationTrait for Migration {
         manager
             .alter_table(
                 Table::alter()
-                    .table(Posts::Table)
-                    .drop_column(Posts::UserId)
+                    .table(Series::Table)
+                    .drop_column(Series::UserId)
                     .to_owned(),
             )
             .await?;
-
         Ok(())
     }
 }
+
