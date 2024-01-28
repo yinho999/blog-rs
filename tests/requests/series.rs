@@ -179,7 +179,6 @@ async fn cannot_create_series_with_posts_of_other_owner(){
         },{
             assert_debug_snapshot!((add_series_request.status_code(), add_series_request.text()));
         });
-
     })
         .await;
 }
