@@ -25,4 +25,5 @@ const Blog = ({
     </Paper>
   );
 };
+
 export default Blog;
